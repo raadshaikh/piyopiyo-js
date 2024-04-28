@@ -66,6 +66,13 @@ UI graphics were taken from the original PiyoPiyo Editor executable: https://www
 - Music Size is the file size, in sub-beats. This is the maximum number of sub-beats the song will store. Typically this coincides with the end marker of the looping section.
 - Music Start/End set the boundaries of the looping section of the song.
 
+##### Credits
+- [PiyoPiyo Editor/Player](https://www.cavestory.org/pixels-works/piyopiyo.php) by [Daisuke "Pixel" Amaya](https://twitter.com/oxizn)
+- [Organya-JS](https://github.com/alula/organya-js) by [Alula](https://github.com/alula)
+- [PiyoPiyo file format decoding](https://forum.cavestory.org/threads/piyopiyo-file-format.5917/) by [Gamemanj/20kdc](https://github.com/20kdc)
+- Two obscure sample songs provided by [Shinseikatsu](https://www.youtube.com/@shin_sei_katsu)
+- MIDI export functionality by [Grimmdude](https://github.com/grimmdude/MidiWriterJS)
+
 ---
 
 [Let me know](https://raadshaikh.github.io/contact.html) if you liked this, hated it, or want something more in it.
