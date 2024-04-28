@@ -1,0 +1,799 @@
+<html>
+
+<head>
+    <title>PiyoPiyo Editor</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+    <style>
+        body {
+            background-color: #f0f0f0;
+            /*d4d0c8*/
+            font: normal 12px Verdana, Arial, sans-serif;
+        }
+
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            padding: 0
+        }
+
+        #toolbar {
+            position: absolute;
+            flex-wrap: nowrap;
+            height: 40px;
+            display: flex;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+
+        #toolbar select {
+            min-width: 5em;
+            max-width: 128px;
+            flex: 0 1 auto;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 40px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            cursor:url(GUI/cursor.cur), auto;
+			min-width: 688px;
+			min-height: 480px;
+        }
+        
+        #table{
+            display:table;
+            justify-content: center
+            width:auto;
+            display: inline-block;
+            list-style:none;
+            padding:0;
+            margin:0;
+        }
+        #table img {
+            display:block;
+            position:relative;
+            margin:0 auto;
+        }
+        #table li {
+        text-align:center;
+    }
+    </style>
+	<link rel="icon" href="../../favicon.ico"></link>
+</head>
+
+<body>
+    <div id="toolbar">
+        <input type="radio" id="dropDownRadio" name="orgSelect" value="dropDownOn" onchange="radioOnChange()">
+        <select id="songs" onchange="playOrg('dontPlay')"></select>
+        <input type="radio" id="urlInputRadio" name="orgSelect" value="urlInputOn" onchange="radioOnChange()">
+        <input type="url" id="idUrlInput" onchange="playOrg('dontPlay')" name="nameUrlInput" minlength="2" maxlength="256" size="10" placeholder="Enter URL" disabled>
+        
+        <div style="padding: 5px;"> </div>
+        <button id='shareButton' style='width: 9em' onclick="shareSong()">Copy link to song</button>
+        <div style="padding: 10px;"> </div>
+        
+        <button onclick="homeOrg()"><img src="GUI/org_home.png" alt="Home"></button>
+        <div style="padding: 5px;"> </div>
+        <button onclick="backMeas()"><img src="GUI/org_back.png" alt="Back"></button>
+        <button onclick="nextMeas()"><img src="GUI/org_next.png" alt="Next"></button>
+        <button onclick="playOrg()"><img src="GUI/org_play.png" alt="Play"></button>
+        <button onclick="pauseOrg()"><img src="GUI/org_stop.png" alt="Stop"></button>
+        <!-- <button onclick="stopOrg()">Stop</button> -->
+        
+        <label style="display: flex;align-items: center;padding-top: 5px;padding-bottom: 5px;padding-left: 20px;padding-right: 0px;">Meas</label>
+        <div style="display: flex;align-items: center;padding:4px;">
+            <label id="currentMeasDisplay" style="display: flex;align-items: center;justify-content: center;box-shadow: inset 1px 1px 3px #999;border: 1px solid #555;padding: 5px;width: 2em">0</label>
+            <div style="padding: 2px;"> </div>
+            <label id="currentStepDisplay" style="display: flex;align-items: center;justify-content: center;box-shadow: inset 1px 1px 3px #999;border: 1px solid #555;padding: 5px;width: 2em">0</label>
+        
+            <label style="display: flex;align-items: center;padding-top: 5px;padding-bottom: 5px;padding-left: 25px;padding-right: 4px;">Track</label>
+            <label id="currentTrackDisplay" style="display: flex;align-items: center;justify-content: center;box-shadow: inset 1px 1px 3px #999;border: 1px solid #555;padding: 5px;width: 1em">1</label>
+            <label style="display: flex;align-items: center;padding-top: 5px;padding-bottom: 5px;padding-left: 10px;padding-right: 4px;">Wait</label>
+            <label id="currentWaitDisplay" style="display: flex;align-items: center;justify-content: center;box-shadow: inset 1px 1px 3px #999;border: 1px solid #555;padding: 5px;width: 2em">0</label>
+        </div>
+        
+            <div style="padding: 10px;"></div>
+            <label style="display: flex;align-items: center;padding-top: 5px;padding-bottom: 5px;padding-left: 0px;padding-right: 4px;">Mute</label>
+            <div id="table">
+                <li><img src="GUI/button_track_1.png"/></li>
+                <li><input type="checkbox" value="0" id="mute_1" name="is1Muted" class="mute"/></li>
+            </div>
+            <div id="table">
+                <li><img src="GUI/button_track_2.png"/></li>
+                <li><input type="checkbox" value="1" id="mute_2" name="is2Muted" class="mute"/></li>
+            </div>
+            <div id="table">
+                <li><img src="GUI/button_track_3.png"/></li>
+                <li><input type="checkbox" value="2" id="mute_3" name="is3Muted" class="mute"/></li>
+            </div>
+            <button onclick="muteAll('melodies')" style="height:38px;padding:2px;"></button>
+            
+                <div style="padding:5px;"></div>
+                
+            <div id="table">    
+                <li><img src="GUI/button_track_Q.png"/></li>
+                <li><input type="checkbox" value="3" id="mute_P" name="isPMuted" class="mute"/></li>
+            </div>
+    
+        <div style="padding:10px;"></div>
+        <button onclick="muteAll('solo')"><img src="GUI/solo.png" alt="Solo"></button>
+		<input type="file" id='fileElem' accept='.pmd' style='display:none' />
+    </div>
+            
+    <div id="canvas-container">
+        <canvas id="org-canvas"></canvas>
+		<!-- <canvas id="org-canvas2"></canvas> -->
+    </div>
+
+    <!-- increment before each deploy -->
+	<script type="module">import MidiWriter from 'https://cdn.jsdelivr.net/npm/midi-writer-js@3.1.1/+esm'; window.MidiWriter=MidiWriter;</script>
+    <script defer src="piyopiyo.js?cache_bust=12"></script>
+    <script src="piyopiyo-ui.js?cache_bust=12"></script>
+
+    <!--I have no clue what this cache bust thing is, but apparently it's needed to reflect updates properly-->
+    <script>
+    
+        let prev_song=null;
+        let new_song=null;
+        
+        (() => {
+            const songs = `Azarashi.pmd
+			myTestFile.pmd
+			ikachan/Ikachan.pmd
+			ikachan/Buriki (Tinplate March).pmd
+			ikachan/Magirete (Under the Rain).pmd
+			ikachan/Mizuno (In the Water).pmd
+			ikachan/Quake.pmd
+			ikachan/Tidepool.pmd
+			examples/Sample1 (Maguman).pmd
+			examples/Doggy1.pmd
+			examples/Iron (Lost Child of Iron).pmd
+			data/Dark.pmd
+			data/BrokenToy.pmd
+			data/ZaomiZaomi.pmd
+			data/Riding in the Air.pmd
+			data/Rain.pmd
+			data/Kirin Musume (Giraffe Girl).pmd
+			data/Oriki.pmd
+			data/Koi Kuzu (Love Scum).pmd
+			data/End of Sorrow.pmd
+			data/Cave Story.pmd
+			data/Sunset (Moonflower).pmd
+			data/Resort Rubber.pmd
+			data/Foreign Land.pmd
+			data/Deep Sea.pmd
+			data/Weak.pmd
+			data/Saturn.pmd
+			data/Aphids.pmd
+			data/Skyscraper Wind.pmd
+			data/Mother.pmd
+			data/Hill With Moon View.pmd`.split("\n").sort();
+
+            const songListEl = document.getElementById("songs");
+            for (let song of songs) {
+                song = song.trim();
+                const opt = document.createElement("option");
+                opt.value = "songs/" + song;
+                opt.textContent = song;
+
+                songListEl.appendChild(opt);
+            }
+
+            const canvasContainer = document.getElementById("canvas-container");
+            const orgCanvas = document.getElementById("org-canvas");
+            orgCanvas.width = canvasContainer.clientWidth;
+            orgCanvas.height = canvasContainer.clientHeight;
+			orgCanvas.oncontextmenu = function(e) { e.preventDefault(); e.stopPropagation(); } //disabling context menu on the canvas so that right-click can be used for other stuff
+            const ui = new OrganyaUI(orgCanvas);
+
+            window.addEventListener("resize", () => {
+                orgCanvas.width = Math.max(canvasContainer.clientWidth, 688); //minimum size is 688x480, otherwise things can started crowding into each other
+                orgCanvas.height = Math.max(canvasContainer.clientHeight, 480);
+                ui.draw();
+            })
+			
+			       
+            window.radioOnChange = () => {
+                if(document.getElementById('dropDownRadio').checked){
+                    document.getElementById('songs').disabled=false;
+                    document.getElementById('idUrlInput').disabled=true;
+                    playOrg('doNotPlay');
+                }
+                else{
+                    document.getElementById('songs').disabled=true;
+                    document.getElementById('idUrlInput').disabled=false;
+					playOrg('doNotPlay');
+                }
+            }
+
+            let currentOrg = null;
+            window.stopOrg = () => {
+                if (currentOrg != null) {
+                    currentOrg.stop();
+                    currentOrg = null;
+                }
+            }
+	    
+            window.pauseOrg = () => {
+                if (currentOrg != null) {
+                    currentOrg.pause();
+                    prev_song = new_song;
+                }
+            }
+
+            window.playOrg = async (argument='doPlay', openDialog=false, blankFile=false) => {
+                console.log("fetching song...");
+				if(openDialog) {
+					res = openDialog;
+					prev_song = new_song;
+                    new_song = res.name;
+					document.getElementById('dropDownRadio').checked=false; 
+					document.getElementById('urlInputRadio').checked=false;
+				}
+				else if(document.getElementById('dropDownRadio').checked && !openDialog && !blankFile){
+					var songname = songListEl.options[songListEl.selectedIndex].value;
+					songname = "https://raadshaikh.github.io/music/piyopiyo-js/" + songname
+					songname = new URL(songname);
+                    res = await fetch(songname);
+					prev_song = new_song;
+                    new_song = songListEl.options[songListEl.selectedIndex].value;
+                }
+                else if(document.getElementById('urlInputRadio').checked && !openDialog && !blankFile){
+					var songname = document.getElementById('idUrlInput').value;
+					songname = new URL(songname);
+                    res = await fetch(songname);
+					prev_song = new_song;
+                    new_song = document.getElementById('idUrlInput').value;
+                }
+                else if(blankFile) {
+					songname = "https://raadshaikh.github.io/music/piyopiyo-js/songs/Blank.pmd"
+					songname = new URL(songname);
+                    res = await fetch(songname);
+					prev_song = new_song;
+                    new_song = 'songs/Blank.pmd';
+					document.getElementById('dropDownRadio').checked=false;
+					document.getElementById('urlInputRadio').checked=false;
+				}
+                if (prev_song != new_song || prev_song == null){
+                    stopOrg();
+					<!-- if (argument!='doPlay'){ -->
+						<!-- shouldUnMuteAll=1; //this doesn't quite work the way i want -->
+						<!-- window.muteAll('solo'); -->
+					<!-- } -->
+                    const data = await res.arrayBuffer();
+					prev_song = new_song;
+                    await initOrganya();
+
+                    currentOrg = new Organya(data);
+                    ui.setOrganya(currentOrg);
+                    currentWaitDisplay.innerHTML=currentOrg.song.wait;
+                    currentOrg.update();
+                }
+				document.activeElement.blur();
+				orgCanvas.focus();
+				window.new_song_trimmed=new_song.substring(1+new_song.lastIndexOf('/'),new_song.length-4);
+                currentOrg.play(argument);
+            }
+			
+			const inputElement = document.getElementById("fileElem");
+			inputElement.addEventListener("change", handleFiles, false);
+			function handleFiles() {
+				const fileList = this.files;
+				const myFile = fileList[0];
+				window.playOrg('dontPlay', myFile, false);
+			}
+            
+            window.homeOrg = () => {
+                if (currentOrg != null) {
+                    currentOrg.homeOrg();
+                    prev_song = new_song; //didn't have this earlier, but it fixes a bug where playing, placing new notes, then clicking home and then playing will erase your changes
+                }
+            }
+			window.endOrg = () => {
+                if (currentOrg != null) {
+                    currentOrg.endOrg();
+                    prev_song = new_song;
+				}
+            }
+            window.backMeas = (small=false) => {
+                if (currentOrg != null) {
+                    currentOrg.backMeas(small);
+                }
+            }
+            window.nextMeas = (small=false) => {
+                if (currentOrg != null) {
+                    currentOrg.nextMeas(small);
+                }
+            }
+            window.updown = (argument) => {
+                const scrollAmount = -64*(Number(argument=='up')-Number(argument=='down'));
+                ui.onScroll({ deltaY: scrollAmount });
+            }
+            
+            let muteMelodies=['mute_1','mute_2','mute_3'];
+            let muteDrums=['mute_P'];
+            let muteAll=muteMelodies.concat(muteDrums);
+            let shouldUnMuteAll=0;
+            window.muteAll = (argument) => {
+                let toMute=[];
+                if (argument=='melodies'){
+                    toMute = muteMelodies;
+                }
+                else if (argument=='drums') {
+                    toMute = muteDrums;
+                }
+                else if (argument=='solo'){
+                    toMute=muteAll.slice(); //to copy arrays
+                    unMute='mute_'+currentTrackDisplay.innerHTML;
+                    toMute.splice(toMute.indexOf(unMute), 1);
+                }
+				if(shouldUnMuteAll==0){
+					for (var i in toMute) {
+                        document.getElementById(toMute[i]).checked=true;
+                    }
+                    if(argument=='solo') document.getElementById(unMute).checked=null;
+				}
+                else if (shouldUnMuteAll==1){
+					for (var i in muteAll) {
+                        document.getElementById(muteAll[i]).checked=null;
+                    }
+                }
+                shouldUnMuteAll=1-shouldUnMuteAll;
+            }
+            
+            
+            let allowedTracks=['1','2','3','4','p']
+			var keyBeingPressed=null;
+            document.addEventListener('keyup', (e) => {
+				keyBeingPressed=null;
+			}, true);
+            document.addEventListener('keydown', (e) => {
+					keyBeingPressed = e.key;
+                    if(currentOrg!=null && allowedTracks.includes(e.key)){
+						if(currentOrg.selectedTrack!=allowedTracks.indexOf(e.key)) shouldUnMuteAll=1-shouldUnMuteAll;
+                        currentTrackDisplay.innerHTML = e.key == 4 ? 'P' : e.key.toUpperCase(); //both '4' and 'p' are accepted names for the drum track, but it should display 'p'
+                        currentOrg.selectedTrack = allowedTracks.indexOf(e.key)
+						if (e.key=='p') currentOrg.selectedTrack = 3;
+                        currentOrg.update();
+                    }
+					else if(e.key=='s'){
+						window.muteAll('solo');
+					}
+					else if(e.key=='m' && currentOrg!=null && !e.ctrlKey){
+						mute_string='mute_'+currentTrackDisplay.innerHTML;
+						mute_element = document.getElementById(mute_string);
+						mute_element.checked = 1-mute_element.checked;
+					}
+                    else if(e.key==" "){
+						e.preventDefault();
+                        if(currentOrg.isPlaying==false) window.playOrg();
+                        else if(currentOrg.isPlaying==true) window.pauseOrg();
+                    }
+                    else if(e.key=="Home" && document.activeElement!=document.getElementById('idUrlInput')){
+                        window.homeOrg();
+                    }
+                    else if(e.key=="End" && document.activeElement!=document.getElementById('idUrlInput')){
+                        window.endOrg();
+                    }
+                    else if(e.key=="ArrowLeft" && !e.shiftKey && document.activeElement!=document.getElementById('idUrlInput')){
+                        window.backMeas();
+                    }
+                    else if(e.key=="ArrowRight" && !e.shiftKey && document.activeElement!=document.getElementById('idUrlInput')){
+                        window.nextMeas();
+                    }
+                    else if(currentOrg && !currentOrg.isLowSpec && e.key=="ArrowUp"){
+                        if(!currentOrg.isWaveformEditor) window.updown('up');
+						else if(currentOrg.isWaveformEditor) currentOrg.editNumbers(0, 1); 
+                    }
+                    else if(currentOrg && !currentOrg.isLowSpec && e.key=="ArrowDown"){
+                        if(!currentOrg.isWaveformEditor) window.updown('down');
+						else currentOrg.editNumbers(0, -1); 
+                    }
+                    else if(currentOrg && !currentOrg.isLowSpec && e.key=="Delete" || e.key=="Backspace"){
+                        currentOrg.deleteNotes();
+                    }
+                    else if(currentOrg && !currentOrg.isLowSpec && e.ctrlKey && e.key=='c'){
+                        currentOrg.changeEditingMode(1);
+						currentOrg.copyNotes();
+                    }
+					else if(currentOrg && !currentOrg.isLowSpec && e.ctrlKey && e.key=='v'){
+                        currentOrg.pasteNotes(-1, -1);
+                    }
+					else if(currentOrg && !currentOrg.isLowSpec && !currentOrg.isWaveformEditor && e.ctrlKey && e.key=='z'){
+                        currentOrg.undo();
+                    }
+					else if(currentOrg && !currentOrg.isLowSpec && !currentOrg.isWaveformEditor && e.ctrlKey && e.key=='y'){
+                        currentOrg.redo();
+                    }
+					else if(e.ctrlKey && e.key=='b'){
+						document.getElementById('songs').disabled = true;
+						window.playOrg('dontPlay', false, true); //open blank file
+                    }
+					else if(e.ctrlKey && e.key=='o'){
+						e.preventDefault();
+						document.getElementById('fileElem').click();
+                    }
+					else if(e.ctrlKey && e.key=='s'){
+						e.preventDefault();
+						currentOrg.saveFile();
+                    }
+					else if(e.ctrlKey && e.altKey && e.key=='u'){
+						currentOrg.transposeNotes(1);
+                    }
+					else if(e.ctrlKey && e.altKey && e.key=='d'){
+						currentOrg.transposeNotes(-1);
+                    }
+					else if(e.ctrlKey && e.altKey && e.key=='m'){
+						currentOrg.exportMIDI();
+                    }
+					else if(e.shiftKey && e.key=='ArrowRight' && document.activeElement!=document.getElementById('idUrlInput')){
+						currentOrg.selectionUpdate(null, 1);
+                    }
+					else if(e.shiftKey && e.key=='ArrowLeft' && document.activeElement!=document.getElementById('idUrlInput')){
+						currentOrg.selectionUpdate(null, -1);
+                    }
+					else if(e.ctrlKey && e.key=='a' && document.activeElement!=document.getElementById('idUrlInput')){
+						e.preventDefault();
+						currentOrg.selectionStart=currentOrg.song.start;
+						currentOrg.selectionEnd=currentOrg.song.end;
+						currentOrg.update();
+                    }
+					else if(currentOrg && !currentOrg.isLowSpec && e.key=='Tab'){
+						e.preventDefault();
+                        //currentOrg.changeEditingMode(1-currentOrg.editingMode); //
+						//if(currentOrg.editingMode==1) currentOrg.copyNotes(); //this would make it toggle modes
+                        currentOrg.changeEditingMode(0); //this just sets pencil mode
+                    }
+					else if(currentOrg && !currentOrg.isLowSpec && e.key=='Enter' && document.activeElement!=document.getElementById('idUrlInput')){
+						currentOrg.toggleWaveformEditor();
+					}
+                
+            }, true);
+			
+			
+			function getMousePosition(canvas, event) {
+            let rect = canvas.getBoundingClientRect();
+            let x = event.clientX - rect.left;
+            let y = event.clientY - rect.top;
+            return [x, y];
+			}
+			
+			orgCanvas.addEventListener('mousedown', (e) => {
+                click_coords = getMousePosition(orgCanvas, e);
+				window.clickHandling(click_coords[0], click_coords[1], e=e);
+            }, true);
+            
+			var isSelecting = false; //variables to keep track of mouse click-and-dragging events
+			var isEditingSamples = false;
+			var isDraggingHeadFoot = false;
+			var isClickingFish = false;
+			window.isClickingFish = isClickingFish;
+			var cursor_coords = [0,0];
+			
+			window.clickHandling = (x, y, e) => {
+				if(currentOrg==null || !currentOrg.isWaveformEditor) {
+					if(y>orgCanvas.height-48 && y<orgCanvas.height-24 && x>orgCanvas.width-192+3*48 && x<orgCanvas.width-192+4*48) {
+						if(currentOrg) currentOrg.pause();
+						alert(helpStrings.about);
+					}
+					if(y>orgCanvas.height-76 && y<orgCanvas.height-48 && x>orgCanvas.width-192+3*48 && x<orgCanvas.width-192+4*48) {
+						if(currentOrg) currentOrg.pause();
+						alert(helpStrings.help);
+					}
+					if(y>orgCanvas.height-24 && y<orgCanvas.height && x>orgCanvas.width-192+48 && x<orgCanvas.width-192+2*48) {
+						if(keyBeingPressed=='Control') {alert(helpStrings.newFile); keyBeingPressed=null;}
+						else {
+							document.getElementById('songs').disabled = true;
+							window.playOrg('dontPlay', false, true);
+						}
+					}
+					if(y>orgCanvas.height-24 && y<orgCanvas.height && x>orgCanvas.width-192+2*48 && x<orgCanvas.width-192+3*48) {
+						if(keyBeingPressed=='Control') {alert(helpStrings.loadFile); keyBeingPressed=null;}
+						else {
+							document.getElementById('fileElem').click();
+						}
+					}
+					if(y>orgCanvas.height-24 && y<orgCanvas.height && x>orgCanvas.width-192+3*48 && x<orgCanvas.width-192+4*48) {
+						if(keyBeingPressed=='Control') {alert(helpStrings.saveFile); keyBeingPressed=null;}
+						else if(e.button==0) currentOrg.saveFile();
+						else if(e.button==2) currentOrg.exportMIDI();
+					}
+					if(y>orgCanvas.height-72+16 && y<orgCanvas.height-72+16+36 && x>104 && x<104+68) {
+						window.isClickingFish=true;
+						ui.draw();
+					}
+				}
+				if(currentOrg != null) {
+					if(y>orgCanvas.height-76 && y<orgCanvas.height-60 && x<256) {
+						if(keyBeingPressed=='Control') {alert(helpStrings.changeTrack); keyBeingPressed=null;}
+						else currentOrg.changeTrack(x, e.button); //left/right click either select or mutes a track. i'll handle both of these with the same function
+					}
+					if(!currentOrg.isWaveformEditor) {	
+						let viewPos = (currentOrg.playPos/currentOrg.MeasxStep | 0)*currentOrg.MeasxStep;
+						let scrollX = viewPos * 12 - 36;
+						if(y>orgCanvas.height-84-16-76 && y<orgCanvas.height-84-16-76+16 && x>currentOrg.song.start*12-scrollX+8 && x<currentOrg.song.start*12-scrollX+8+12) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.head); keyBeingPressed=null;}
+							else if(e.button==2) isDraggingHeadFoot = 'head';
+						}
+						if(y>orgCanvas.height-84-16-76 && y<orgCanvas.height-84-16-76+16 && x>currentOrg.song.end*12-scrollX+8 && x<currentOrg.song.end*12-scrollX+8+12) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.foot); keyBeingPressed=null;}
+							else if(e.button==2) isDraggingHeadFoot = 'foot';
+						}
+						if(y>orgCanvas.height-84-16-76 && y<orgCanvas.height-84-16-76+16 && x>currentOrg.song.songLength*12-scrollX+8 && x<currentOrg.song.songLength*12-scrollX+8+12) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.size); keyBeingPressed=null;}
+							else if(e.button==2) isDraggingHeadFoot = 'size';
+						}
+						if(y>=orgCanvas.height-84-16-76 && y<=orgCanvas.height-84-76 && x>36+8) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.cursorUpdate); keyBeingPressed=null;}
+							else if(e.button==0 && keyBeingPressed!=='Control'){
+								currentOrg.cursorUpdate(x-8); 
+								if (currentOrg.editingMode==0) isSelecting=true;
+							}
+						}
+						if(y>16 && y<orgCanvas.height-84-16-76 && x>36+8) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.addNote); keyBeingPressed=null;}
+							else {
+								if (currentOrg.editingMode==0) currentOrg.addNote(x-8, y, ui.scrollY);
+								else if (currentOrg.editingMode==1) currentOrg.pasteNotes(x-8, y);
+							}
+						}
+						if(y>orgCanvas.height-84-76 && y<orgCanvas.height-76 && x>36+8) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.addPan); keyBeingPressed=null;}
+							else currentOrg.addPan(x-8, y, orgCanvas.height);
+						}
+						if(y>16 && y<orgCanvas.height-84-16-76 && x>8 && x<36+8) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.pianoRoll); keyBeingPressed=null;}
+							else currentOrg.previewNote(y, ui.scrollY);
+						}
+						if(y>orgCanvas.height-76 && y<orgCanvas.height-48 && x>orgCanvas.width-192 && x<orgCanvas.width-192+48) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.homeOrg); keyBeingPressed=null;}
+							else homeOrg();
+						}
+						if(y>orgCanvas.height-76 && y<orgCanvas.height-48 && x>orgCanvas.width-192+48 && x<orgCanvas.width-192+2*48) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.playOrg); keyBeingPressed=null;}
+							else playOrg();
+						}
+						if(y>orgCanvas.height-76 && y<orgCanvas.height-48 && x>orgCanvas.width-192+2*48 && x<orgCanvas.width-192+3*48) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.pauseOrg); keyBeingPressed=null;}
+							else pauseOrg();
+						}
+						if(y>orgCanvas.height-48 && y<orgCanvas.height-24 && x>orgCanvas.width-192+2*48 && x<orgCanvas.width-192+3*48) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.deleteNotes); keyBeingPressed=null;}
+							else currentOrg.deleteNotes();
+						}
+						if(y>orgCanvas.height-48 && y<orgCanvas.height-24 && x>orgCanvas.width-192 && x<orgCanvas.width-192+48) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.pencilMode); keyBeingPressed=null;}
+							else currentOrg.changeEditingMode(0);
+						}
+						if(y>orgCanvas.height-48 && y<orgCanvas.height-24 && x>orgCanvas.width-192+48 && x<orgCanvas.width-192+2*48) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.duplicationMode); keyBeingPressed=null;}
+							else {currentOrg.changeEditingMode(1); currentOrg.copyNotes();}
+						}
+						if(y>orgCanvas.height-72 && y<orgCanvas.height-72+32 && x>orgCanvas.width-192-8-32 && x<orgCanvas.width-192-8) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.changeLoop); keyBeingPressed=null;}
+							else currentOrg.changeLoop();
+						}
+						if(y>orgCanvas.height-72+32 && y<orgCanvas.height-72+64 && x>orgCanvas.width-192-8-32 && x<orgCanvas.width-192-8) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.changeLowSpec); keyBeingPressed=null;}
+							else currentOrg.changeLowSpec();
+						}
+						if(y>orgCanvas.height-24 && y<orgCanvas.height && x>orgCanvas.width-192 && x<orgCanvas.width-192+48) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.waveformEditor); keyBeingPressed=null;}
+							else currentOrg.toggleWaveformEditor();
+						}
+					}
+					if(currentOrg.isWaveformEditor) {
+						if(y>orgCanvas.height-24 && y<orgCanvas.height && x>orgCanvas.width-48 && x<orgCanvas.width) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.ok); keyBeingPressed=null;}
+							else currentOrg.toggleWaveformEditor();
+						}
+						if(y>274 && y<274+120 && x>64 && x<64+120) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.updateNoteIcon); keyBeingPressed=null;}
+							else currentOrg.updateNoteIcon(x, y);
+						}
+						if (x>64 && x<64+512 && y>56 && y<56+200) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.waveSamples); keyBeingPressed=null;}
+							else isEditingSamples=true;
+						}
+						if (x>320 && x<320+256 && y>274 && y<274+128) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.envelopeSamples); keyBeingPressed=null;}
+							else isEditingSamples=true;
+						}
+						if (x>56 && x<56+48 && y>orgCanvas.height-76+18 && y<orgCanvas.height-76+18+16) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.editVolume); keyBeingPressed=null;}
+							else {
+								if(currentOrg.flashArrowsIndex==null) setInterval(currentOrg.flashArrows.bind(currentOrg), 100);
+								currentOrg.isEditingNumbers=0;
+								if (e.button==2) {let newValue = prompt('New Volume value:'); currentOrg.editNumbers(newValue);}
+							}
+						}
+						if (x>56 && x<56+48 && y>orgCanvas.height-76+36 && y<orgCanvas.height-76+36+16) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.editLength); keyBeingPressed=null;}
+							else {
+								if(currentOrg.flashArrowsIndex==null) setInterval(currentOrg.flashArrows.bind(currentOrg), 100);
+								currentOrg.isEditingNumbers=1;
+								if (e.button==2) {let newValue = prompt('New Length value:'); currentOrg.editNumbers(newValue);}
+							}
+						}
+						if (x>56 && x<56+48 && y>orgCanvas.height-76+54 && y<orgCanvas.height-76+54+16) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.editOctave); keyBeingPressed=null;}
+							else {
+								if(currentOrg.flashArrowsIndex==null) setInterval(currentOrg.flashArrows.bind(currentOrg), 100);
+								currentOrg.isEditingNumbers=2;
+								if (e.button==2) {let newValue = prompt('New Octave value:'); currentOrg.editNumbers(newValue);}
+							}
+						}
+						if (x>392 && x<392+48 && y>orgCanvas.height-76+36 && y<orgCanvas.height-76+36+16) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.editSize); keyBeingPressed=null;}
+							else {
+								if(currentOrg.flashArrowsIndex==null) setInterval(currentOrg.flashArrows.bind(currentOrg), 100);
+								currentOrg.isEditingNumbers=3;
+								if (e.button==2) {let newValue = prompt('New Music Size value:'); currentOrg.editNumbers(newValue);}
+							}
+						}
+						if (x>392 && x<392+48 && y>orgCanvas.height-76+54 && y<orgCanvas.height-76+54+16) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.editWait); keyBeingPressed=null;}
+							else {
+								if(currentOrg.flashArrowsIndex==null) setInterval(currentOrg.flashArrows.bind(currentOrg), 100);
+								currentOrg.isEditingNumbers=4;
+								if (e.button==2) {let newValue = prompt('New Music Wait value:'); currentOrg.editNumbers(newValue);}
+							}
+						}
+						if (x>520 && x<520+48 && y>orgCanvas.height-76+36 && y<orgCanvas.height-76+36+16) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.editStart); keyBeingPressed=null;}
+							else {
+								if(currentOrg.flashArrowsIndex==null) setInterval(currentOrg.flashArrows.bind(currentOrg), 100);
+								currentOrg.isEditingNumbers=5;
+								if (e.button==2) {let newValue = prompt('New Music Start value:'); currentOrg.editNumbers(newValue);}
+							}
+						}
+						if (x>520 && x<520+48 && y>orgCanvas.height-76+54 && y<orgCanvas.height-76+54+16) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.editEnd); keyBeingPressed=null;}
+							else {
+								if(currentOrg.flashArrowsIndex==null) setInterval(currentOrg.flashArrows.bind(currentOrg), 100);
+								currentOrg.isEditingNumbers=6;
+								if (e.button==2) {let newValue = prompt('New Music End value:'); currentOrg.editNumbers(newValue);}
+							}
+						}
+						if(x>600 && x<656 && y>74 && y<74+160) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.presets); keyBeingPressed=null;}
+							else currentOrg.presetsWave(y);
+						}
+						if(x>320+256+36 && x<320+256+36+34 && y>274 && y<274+130) {
+							if(keyBeingPressed=='Control') {alert(helpStrings.presets); keyBeingPressed=null;}
+							else currentOrg.presetsEnve(y);
+						}
+					}
+					if (currentOrg.onUpdate) currentOrg.onUpdate(currentOrg);
+				}
+			}
+			
+			orgCanvas.addEventListener('mousemove', (e) => {
+                cursor_coords = getMousePosition(orgCanvas, e);
+				if (currentOrg != null) {
+					if (!currentOrg.isWaveformEditor && cursor_coords[0]>orgCanvas.width-8 && cursor_coords[1]<orgCanvas.height-74 && currentOrg.isPlaying==false) window.nextMeas(true);
+					if (!currentOrg.isWaveformEditor && cursor_coords[0]<8 && cursor_coords[1]<orgCanvas.height-74 && currentOrg.isPlaying==false) window.backMeas(true);
+					if (isSelecting) currentOrg.selectionUpdate(cursor_coords[0]);
+					if (isDraggingHeadFoot) currentOrg.headFootUpdate(cursor_coords[0], cursor_coords[1], isDraggingHeadFoot);
+					if (isEditingSamples && currentOrg.isWaveformEditor && cursor_coords[0]>64 && cursor_coords[0]<64+512 && cursor_coords[1]>56 && cursor_coords[1]<56+200) currentOrg.editWaveSamples(cursor_coords[0], cursor_coords[1]);
+					if (isEditingSamples && currentOrg.isWaveformEditor && cursor_coords[0]>320 && cursor_coords[0]<320+256 && cursor_coords[1]>274 && cursor_coords[1]<274+128) currentOrg.editEnvelopeSamples(cursor_coords[0], cursor_coords[1]);
+				}
+			}, true);
+			
+			orgCanvas.addEventListener('mouseup', (e) => {
+				isSelecting = false;
+				isEditingSamples = false;
+				window.isClickingFish = false;
+				if(isDraggingHeadFoot) {
+					isDraggingHeadFoot = false;
+					currentOrg.archivesUpdate();
+				}
+                //cursor_coords = getMousePosition(orgCanvas, e);
+				//if (currentOrg!=null && cursor_coords[0]>orgCanvas.width-8) window.nextMeas();
+				//if (currentOrg!=null && cursor_coords[0]<8) window.backMeas();
+				ui.draw();
+            }, true);
+			
+			orgCanvas.addEventListener('dragover', (e) => {
+				e.preventDefault();
+            }, true);
+			orgCanvas.addEventListener('drop', (e) => {
+				e.preventDefault();
+				var fileList = e.dataTransfer.files;
+				if(fileList.length>0) {
+					var myFile = fileList[0];
+					window.playOrg('dontPlay', myFile, false);
+				}
+            }, true);
+			
+			
+			//to allow people to send links directly to a particular song, using questionmark stuff in the url
+			let myUrl = window.location.href;
+			let noQUrl = window.location.href; //url without any questionmark business
+			qIndex = myUrl.indexOf('?');
+			if(qIndex != -1){
+				noQUrl = myUrl.substring(0, qIndex);
+				if(myUrl.substring(qIndex+1, qIndex+1+6)=='DDsong'){
+					document.getElementById('dropDownRadio').checked = true;
+					let songUrl = myUrl.substring(qIndex+1+6+1, myUrl.length);
+					songUrl = decodeURIComponent(songUrl);
+					var songs_trimmed = [];
+					for(let song of songs){
+						songs_trimmed.push(song.trim());
+					}
+					songListEl.selectedIndex = songs_trimmed.indexOf(songUrl);
+					playOrg('dontplay');
+				}
+				else if(myUrl.substring(qIndex+1, qIndex+1+3)=='url'){
+					document.getElementById('urlInputRadio').checked = true;
+					let songUrl = myUrl.substring(qIndex+1+3+1, myUrl.length);
+					songUrl = decodeURIComponent(songUrl);
+					document.getElementById('idUrlInput').value = songUrl;
+					playOrg('dontplay');					
+				}
+			}
+			
+			window.shareSong = () => {
+				if(new_song != null){
+					let songUrl = noQUrl;
+					if(document.getElementById('dropDownRadio').checked == true){
+						songUrl += '?DDsong=';
+						songUrl += encodeURIComponent(new_song.substring(6, new_song.length)); //trimming 'songs/' from the beginning
+					}
+					else if(document.getElementById('urlInputRadio').checked == true){
+						songUrl += '?url=';
+						songUrl += new_song;
+					}
+					navigator.clipboard.writeText(songUrl);
+					document.getElementById('shareButton').innerHTML='Copied!';
+					setTimeout("document.getElementById('shareButton').innerHTML='Copy link to song';", 750)
+				}
+			}
+            
+        })();
+		
+		
+		const helpStrings = {
+			head: "This marks the beginning of the looping section of the song.\nRight-click+drag to move it.",
+			foot: "This marks the end of the looping section of the song.\nRight-click+drag to move it.",
+			size: "This marks the position of the last possible note in the file. It sets the file size, and typically coincides with the end loop marker.\nKeep in mind that any notes after the end loop marker will never be played.\nRight-click+drag to move it, or change it via the instrument editor (Enter).",
+			cursorUpdate: "Click somewhere along the red line to place the playhead at that position.\nThe display will adjust so that the measure with the playhead appears first on the left of the screen.\nClick and drag along the line (or Shift+Left/Right) to make a selection, useful for copying or transposing notes.\nYou can also move to the next measure using the arrow keys, or by moving your cursor to the purple border on either side.\nCtrl+Alt+U and Ctrl+Alt+D to transpose selected notes up or down.",
+			pianoRoll: "Click on the piano roll to preview a note. The note will also preview when being added/deleted.\nKeep in mind that PiyoPiyo only supports a range of two octaves for any particular instrument.",
+			addNote: "Click anywhere on the piano roll to place or remove a note at that position (in Pencil Mode).\nIn Duplication Mode, the copied notes from the clipboard will be placed.\nCtrl+Z and Ctrl+Y to undo/redo.\nCtrl+Alt+U and Ctrl+Alt+D to transpose selected notes up or down.\nKeep in mind that PiyoPiyo only supports a range of two octaves for any particular instrument.",
+			addPan: "Click in the Pan table to adjust the pan value of a note.\nCtrl+Z and Ctrl+Y to undo/redo.",
+			changeTrack: "Left-click on the Track buttons to select that track.\nYou can also press the corresponding number keys to select that track.\nPress 'S' or 'M' to Solo or Mute the selected track.\nRight-click on any track to mute it.",
+			homeOrg: "Go to the beginning of the song.\nKeyboard shortcut: 'Home'",
+			playOrg: "Play the song.\nYou can play and pause with the 'Space' key.",
+			pauseOrg: "Pause the song.\nYou can play and pause with the 'Space' key.",
+			pencilMode: "This mode lets you place or remove individual notes from the piano roll.\nPress 'Tab' to enable.",
+			duplicationMode: "Make a selection and press this button to copy the notes withing the selection region. Then click somewhere in the piano roll to paste the notes at that position.\nYou can also copy notes from the selection region with 'Ctrl+C', and paste at the playhead position with 'Ctrl+V'.",
+			deleteNotes: "Click this button to delete all notes in the selection region.\nKeyboard shortcut: 'Backspace' or 'Delete'",
+			changeLoop: "This option enables looping of the song playback.",
+			changeLowSpec: "This option disables the piano roll display, which may help if the playback is lagging.",
+			waveformEditor: "Open instrument editing window.\nKeyboard shortcut: 'Enter'",
+			ok: "Save instrument/song changes and return to piano roll window.\nKeyboard shortcut: 'Enter'",
+			updateNoteIcon: "Choose an icon for the selected track's notes.",
+			waveSamples: "Click and drag here to draw a waveform for the selected track's instrument.",
+			envelopeSamples: "Click and drag here to set the volume envelope (fade in/out, etc.) for the selected track's instrument.",
+			editVolume: "Volume of the selected track (1-300).\nClick and then use up/down to increment/decrement.\nRight-click to enter new value directly.",
+			editLength: "Duration of one note of the selected track (40-44100).\nA value of 22050 corresponds to 1 second.\nClick and then use up/down to increment/decrement.\nRight-click to enter new value directly.",
+			editOctave: "Octave of the selected track (0-5).\nPiyoPiyo supports a range of two octaves for any instrument, offset from a baseline octave.\nClick and then use up/down to increment/decrement.\nRight-click to enter new value directly.",
+			editSize: "Size of the song (16-4096).\nTypically coincides with the end loop marker.\nClick and then use up/down to increment/decrement.\nRight-click to enter new value directly.\n(You can also right-click+drag the marker on the playback bar.)",
+			editWait: "Playback speed of the song (20-1000).\nThis is the duration of one tick/subbeat in milliseconds.\nFor a 4x4 time signature, BPM = 15000/songWait\nClick and then use up/down to increment/decrement.\nRight-click to enter new value directly.",
+			editStart: "Start of the song's loop section. (0-song length).\nClick and then use up/down to increment/decrement.\nRight-click to enter new value directly.\n(You can also right-click+drag the marker on the playback bar.)",
+			editEnd: "End of the song's loop section (0-song length).\nClick and then use up/down to increment/decrement.\nRight-click to enter new value directly.\n(You can also right-click+drag the marker on the playback bar.)",
+			presets: "Click one of these presets to start with a basic waveform or envelope shape.",
+			newFile: "Create a new blank song.",
+			loadFile: "Click here to load a .pmd song from your computer.\nYou can also drag-and-drop a .pmd file onto the page.",
+			saveFile: "Click here to save the current song to your computer as a .pmd file.\n\nRight-click (or Ctrl+Alt+M) to export it as MIDI.\n(Some programs may not be able to open this MIDI.)",
+			help: "After loading/starting a song, you can Ctrl+click on any object or element to learn about it.",
+			about: "PiyoPiyo Player/Editor by Daisuke 'Pixel' Amaya, (c) 1998\nPiyoPiyo-JS (browser port) by IdioticBaka1824, based on Organya-JS by Alula\nPiyoPiyo file format decoding by Gamemanj\nTwo obscure sample songs found by Shinseikatsu\nMIDI export functionality by Grimmdude (MidiWriterJS)\n\nThe PiyoPiyo format was developed by Pixel to produce music for Ikachan, Azarashi (1998), and Doggy Wyvern (unreleased).\nIt was eventually superseded by the Organya format, used for Azarashi (2001) and Cave Story.\nThe Ikachan soundtrack, as well as sample songs found bundled with PiyoPiyo player/editor, are available to listen from the drop-down list provided."
+		}		
+    </script>
+</body>
+
+</html>
