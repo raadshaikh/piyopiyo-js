@@ -22,6 +22,7 @@ UI graphics were taken from the original PiyoPiyo Editor executable: https://www
 - Probably related to the above, but the playback isn't visually 'smooth': the cursor sort of jumps between notes and doesn't proceed at a uniform speed.
 - Sometimes the page doesn't work, but if you try refreshing it a couple of times, it starts working.
 - Sound preview (when clicking the piano keys or placing a note) does not work for most drums.
+- The fish cursor isn't working when I deploy this repository as a site ([it does work when I publish this page as a regular website](https://raadshaikh.github.io/music/piyopiyo-js/piyopiyo-index.html))
 
 ---
 
