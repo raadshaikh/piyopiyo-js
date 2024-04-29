@@ -77,7 +77,6 @@
 			this.meas = [4, 4]; //I don't think piyopiyo allows for any other type
 			
             this.wait = view.getUint32(p, true); p += 4;
-			this.waitFudge = 1.1; //why am i having to do this??
             this.start = view.getInt32(p, true); p += 4;
             this.end = view.getInt32(p, true); p += 4;
             this.songLength = view.getInt32(p, true); p += 4; //upper bound on number of steps to play or consider
@@ -205,7 +204,7 @@
 							this.pause();
 						}
 						else {
-							this.state[this.selectedTrack][0].length[0] -= this.song.wait*this.song.waitFudge/1000; //??
+							this.state[this.selectedTrack][0].length[0] -= this.song.wait/1000; //??
 						}
 					}
 				}
@@ -253,14 +252,15 @@
 								let s = s1 + (s2 - s1) * fract;
 
 								//envelope volume stuff
-								let fractionOfThisNoteCompleted = 1 - (this.state[i][i_prec].length[i_note] - this.samplesThisTick/this.sampleRate)/(this.song.instruments[i].envelopeLength/(piyoWaveSampleRate));
+								let fractionOfThisNoteCompleted = 1.9 - (this.state[i][i_prec].length[i_note] - this.samplesThisTick/this.sampleRate)/(this.song.instruments[i].envelopeLength/(piyoWaveSampleRate)/2);
+								if (fractionOfThisNoteCompleted<0) {fractionOfThisNoteCompleted=0;} 
 								let volumeEnv=1;
 								if (fractionOfThisNoteCompleted>1) {volumeEnv=0;} //in case we're in that little bit of overshoot because of the ticks not lining up with envelope lengths
 								else {volumeEnv = (i<3) ? this.song.instruments[i].envelopeSamples[(fractionOfThisNoteCompleted*63 | 0)]/128 : 1-0.4*(this.state[i][i_prec].keys[i_note]%2==1);} //envelope samples go 0-128. also, odd-key drums are softer. the 0.4 factor is eyeballed
 								
 								s *= Math.pow(10, ((this.state[i][i_prec].vol[i_note] - 256) * 8)/2000);
 								//s *= Math.pow(10, 1.2*this.state[i][i_prec].vol[i_note]/300 - 1.45) //my messy calculation that i turned out not to need when i figured out how the envelope works
-								s *= volumeEnv; //why didn't i realise this right away i'm so stupid
+								s *= volumeEnv*2; //why didn't i realise this right away i'm so stupid
 								
 								const pan = (panTable[this.state[i][i_prec].pan[i_note]] - 256) * 10;
 								let left = 1, right = 1;
@@ -757,7 +757,7 @@
 			var midiTracks=[];
 			for(let n_track=0; n_track<4; n_track++){
 				const track = new MidiWriter.Track();
-				track.setTempo(15000/(this.song.wait*this.song.waitFudge) | 0);
+				track.setTempo(15000/(this.song.wait) | 0);
 				for(let i_raw=0; i_raw<this.song.start+loops*(this.song.end-this.song.start); i_raw++){
 					let i = this.song.start + (i_raw-this.song.start)%(this.song.end-this.song.start);
 					let record = this.song.tracks[n_track][i];
@@ -853,7 +853,7 @@
 							this.state[track][i_prec].vol.splice(i_note, 1);
 						}
 						else {
-							this.state[track][i_prec].length[i_note] -= 1.6*this.song.wait*this.song.waitFudge/1000; //why am I multiplying this extra number thing here? and the waitfudge too. I have no idea why I'm having to do this. But playback is too slow without it. More like notes are too long without it. What is going on??
+							this.state[track][i_prec].length[i_note] -= this.song.wait/1000;
 						}
 					}
 					if(this.state[track][i_prec].length.length==0) {this.state[track].splice(i_prec, 1);}
@@ -883,7 +883,7 @@
 			if(this.isPlaying==false){
 				this.ctx = new (window.AudioContext || window.webkitAudioContext)();
 				this.sampleRate = this.ctx.sampleRate;
-				this.samplesPerTick = (this.sampleRate / 1000) * this.song.wait*this.song.waitFudge | 0; //??
+				this.samplesPerTick = (this.sampleRate / 1000) * this.song.wait | 0;
 				this.samplesThisTick = 0;
 				this.beginTime = this.d.getTime();
 				//console.log(this.beginTime);
