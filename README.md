@@ -70,7 +70,7 @@ UI graphics were taken from the original PiyoPiyo Editor executable: https://www
 - [PiyoPiyo Editor/Player](https://www.cavestory.org/pixels-works/piyopiyo.php) by [Daisuke "Pixel" Amaya](https://twitter.com/oxizn)
 - [Organya-JS](https://github.com/alula/organya-js) by [Alula](https://github.com/alula)
 - [PiyoPiyo file format decoding](https://forum.cavestory.org/threads/piyopiyo-file-format.5917/) by [Gamemanj/20kdc](https://github.com/20kdc)
-- Two obscure sample songs provided by [Shinseikatsu](https://www.youtube.com/@shin_sei_katsu)
+- Two obscure sample songs provided by [Ahotcho](https://forum.cavestory.org/members/ahotcho.10652/)
 - MIDI export functionality by [Grimmdude](https://github.com/grimmdude/MidiWriterJS)
 
 ---
