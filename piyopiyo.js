@@ -252,7 +252,7 @@
 								let s = s1 + (s2 - s1) * fract;
 
 								//envelope volume stuff
-								let fractionOfThisNoteCompleted = 1.9 - (this.state[i][i_prec].length[i_note] - this.samplesThisTick/this.sampleRate)/(this.song.instruments[i].envelopeLength/(piyoWaveSampleRate)/2);
+								let fractionOfThisNoteCompleted = 1.825 - (this.state[i][i_prec].length[i_note] - this.samplesThisTick/this.sampleRate)/(this.song.instruments[i].envelopeLength/(piyoWaveSampleRate)/2);
 								if (fractionOfThisNoteCompleted<0) {fractionOfThisNoteCompleted=0;} 
 								let volumeEnv=1;
 								if (fractionOfThisNoteCompleted>1) {volumeEnv=0;} //in case we're in that little bit of overshoot because of the ticks not lining up with envelope lengths
@@ -260,7 +260,7 @@
 								
 								s *= Math.pow(10, ((this.state[i][i_prec].vol[i_note] - 256) * 8)/2000);
 								//s *= Math.pow(10, 1.2*this.state[i][i_prec].vol[i_note]/300 - 1.45) //my messy calculation that i turned out not to need when i figured out how the envelope works
-								s *= volumeEnv*2; //why didn't i realise this right away i'm so stupid
+								s *= volumeEnv; //why didn't i realise this right away i'm so stupid
 								
 								const pan = (panTable[this.state[i][i_prec].pan[i_note]] - 256) * 10;
 								let left = 1, right = 1;
