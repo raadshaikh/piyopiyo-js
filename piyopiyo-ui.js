@@ -1,4 +1,8 @@
 (() => {
+	CanvasRenderingContext2D.prototype.drawImage2 = function(my_image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight){
+		this.drawImage(my_image, Math.round(sx), Math.round(sy), Math.round(sWidth), Math.round(sHeight), Math.round(dx), Math.round(dy), Math.round(dWidth), Math.round(dHeight))
+	} //there were some glitches in the image rendering around the edges that was apparently caused by subpixel rendering, this fixes that
+	
     class OrganyaUI {
         /**
          * @param {HTMLCanvasElement} canvas 
@@ -110,18 +114,18 @@
             }
 			if (rtl==false) {
 				for (let i = 0; i < str.length; i++) {
-					this.ctx.drawImage(this.number, (str.charCodeAt(i) - 0x30) * 8, white ? 0 : 16, 8, 16, x + 8 * i, y, 8, 16);
+					this.ctx.drawImage2(this.number, (str.charCodeAt(i) - 0x30) * 8, white ? 0 : 16, 8, 16, x + 8 * i, y, 8, 16);
 				}
 			}
 			else if(rtl==true) //right-to-left, for the right-aligned numbers in the settings panels
 				for (let i = str.length-1; i >= 0; i--) {
-					this.ctx.drawImage(this.number, (str.charCodeAt(i) - 0x30) * 8, white ? 0 : 16, 8, 16, x - 8 * (str.length-i), y, 8, 16);
+					this.ctx.drawImage2(this.number, (str.charCodeAt(i) - 0x30) * 8, white ? 0 : 16, 8, 16, x - 8 * (str.length-i), y, 8, 16);
 				}
         }
         
         drawHeadFoot(x, y, argument) {
             //argument=0 for song start, 1 for song end, 2 for song length (typically = end)
-            this.ctx.drawImage(this.cursor, 44+12*argument,16-16*(argument==2),12,16,x,y,12,16);
+            this.ctx.drawImage2(this.cursor, 44+12*argument,16-16*(argument==2),12,16,x,y,12,16);
         }
 
         onUpdate() {
@@ -145,7 +149,7 @@
             const meas = this.organya ? this.organya.song.meas : [4, 4];
             const startMeas = this.organya ? this.organya.startMeas : 0;
 			
-			this.ctx.drawImage(this.piyo, 0, 0, 128, 128, width/2-128/2, height/2-128/2, 128, 128); //splash image
+			this.ctx.drawImage2(this.piyo, 0, 0, 128, 128, width/2-128/2, height/2-128/2, 128, 128); //splash image
 
 			if(this.organya && !this.organya.isLowSpec && !this.organya.isWaveformEditor) {
 				var y = -this.scrollY;
@@ -169,7 +173,7 @@
 							subBeat = 0;
 							if (++beat === meas[0]) beat = 0;
 						}
-						this.ctx.drawImage(this.pianoRoll, sprX, 0, dx, 144, x, y, 12, 144);
+						this.ctx.drawImage2(this.pianoRoll, sprX, 0, dx, 144, x, y, 12, 144);
 						x += 12;
 					}
 
@@ -179,7 +183,7 @@
 				let octave = 7; //piano roll on left
 				y = -this.scrollY;
 				while (y < height) {
-					this.ctx.drawImage(this.pianoRoll, 0, 0, 36, 144, 8, y, 36, 144);
+					this.ctx.drawImage2(this.pianoRoll, 0, 0, 36, 144, 8, y, 36, 144);
 					this.drawNumber(25+8, y + 126, octave, 0, true);
 					if (octave-- === 0) break;
 					y += 144;
@@ -187,12 +191,12 @@
 				
 				x = 8;
 				while (x < width) {
-					this.ctx.drawImage(this.pianoRoll, 0, 240, 12, 16, x, height-84-16-76, 12, 16); // red strip along which chick runs
+					this.ctx.drawImage2(this.pianoRoll, 0, 240, 12, 16, x, height-84-16-76, 12, 16); // red strip along which chick runs
 					x += 12;
 				}
 				
 				y = height-84-76;
-				this.ctx.drawImage(this.pianoRoll, 0, 144, 36, 84, 8, y, 36, 84); //pan table
+				this.ctx.drawImage2(this.pianoRoll, 0, 144, 36, 84, 8, y, 36, 84); //pan table
 				x = 36;
 				let beat = 0;
 				let subBeat = 0;
@@ -216,7 +220,7 @@
 						subBeat = 0;
 						if (++beat === meas[0]) beat = 0;
 					}
-					this.ctx.drawImage(this.pianoRoll, sprX, 144, dx, 84, x+8, y, 12, 84); //pan table
+					this.ctx.drawImage2(this.pianoRoll, sprX, 144, dx, 84, x+8, y, 12, 84); //pan table
 					x += 12;
 				}
 				
@@ -257,49 +261,49 @@
 										sprHeadY = 120;
 									}
 								let note_bar_overlap = Math.max((noteY+12)-(height-84-16-76), 0);
-								this.ctx.drawImage(this.noteImg, sprHeadX, sprHeadY, 12, 12-note_bar_overlap, noteX+8, noteY, 12, 12-note_bar_overlap); //notes
+								this.ctx.drawImage2(this.noteImg, sprHeadX, sprHeadY, 12, 12-note_bar_overlap, noteX+8, noteY, 12, 12-note_bar_overlap); //notes
 								}
-								if (track==this.organya.selectedTrack) this.ctx.drawImage(this.noteImg, track!=3 ? sprHeadX : 108, track!=3 ? sprHeadY : 108, 12, 12, noteX+8, panY, 12, 12); //pan values
+								if (track==this.organya.selectedTrack) this.ctx.drawImage2(this.noteImg, track!=3 ? sprHeadX : 108, track!=3 ? sprHeadY : 108, 12, 12, noteX+8, panY, 12, 12); //pan values
 							}
 						}
 					}
 					for(let i=Math.min(this.organya.selectionStart,this.organya.selectionEnd); i<Math.max(this.organya.selectionStart,this.organya.selectionEnd); i++){
-						this.ctx.drawImage(this.cursor, 56, 0, 12, 16, i*12-scrollX+8, height-84-16-76, 12, 16) //selected section ()
+						this.ctx.drawImage2(this.cursor, 56, 0, 12, 16, i*12-scrollX+8, height-84-16-76, 12, 16) //selected section ()
 					}
 					this.drawHeadFoot(this.organya.song.songLength*12-scrollX+8, height-84-16-76, 2); // song size marker
 					this.drawHeadFoot(this.organya.song.start*12-scrollX+8, height-84-16-76, 0); //song start marker
 					this.drawHeadFoot(this.organya.song.end*12-scrollX+8, height-84-16-76, 1); // song end marker
-					this.ctx.drawImage(this.cursor, 68, 16, 12, 16, chickX+8, height-84-16-76, 12, 16); //running chick
+					this.ctx.drawImage2(this.cursor, 68, 16, 12, 16, chickX+8, height-84-16-76, 12, 16); //running chick
 				}
 
 				// purple border
 				var x = 0;
 				while (x < width) {
-					this.ctx.drawImage(this.pianoRoll, 24, 232, 8, 8, x, 8, 8, 8);
-					this.ctx.drawImage(this.pianoRoll, 120, 0, 8, 8, x, 0, 8, 8);
-					this.ctx.drawImage(this.pianoRoll, 24, 248, 8, 8, x, height-76, 8, 8);
+					this.ctx.drawImage2(this.pianoRoll, 24, 232, 8, 8, x, 8, 8, 8);
+					this.ctx.drawImage2(this.pianoRoll, 120, 0, 8, 8, x, 0, 8, 8);
+					this.ctx.drawImage2(this.pianoRoll, 24, 248, 8, 8, x, height-76, 8, 8);
 					x += 8;
 				}
-				this.ctx.drawImage(this.pianoRoll, 40, 240, 88, 16, 0, 0, 88, 16);
+				this.ctx.drawImage2(this.pianoRoll, 40, 240, 88, 16, 0, 0, 88, 16);
 				var y = 16;
 				while (y < height-76) {
-					this.ctx.drawImage(this.pianoRoll, 16, 240, 8, 8, 0, y, 8, 8);
-					this.ctx.drawImage(this.pianoRoll, 32, 240, 8, 8, width-8, y, 8, 8);
+					this.ctx.drawImage2(this.pianoRoll, 16, 240, 8, 8, 0, y, 8, 8);
+					this.ctx.drawImage2(this.pianoRoll, 32, 240, 8, 8, width-8, y, 8, 8);
 					y += 8;
 				}
 			}
 			
 			//settings etc
-			this.ctx.drawImage(this.pianoRoll, 120, 0, 1, 1, 0, height-72+4, width, 72-4); //blacking out the settings area first
-			this.ctx.drawImage(this.setting, 0, 0, 448, 72, 0, height-72, 448, 72); //settings panel
-			if(window.isClickingFish) this.ctx.drawImage(this.setting, 104, 88, 64, 36, 104, height-72+16, 64, 36);
+			this.ctx.drawImage2(this.pianoRoll, 120, 0, 1, 1, 0, height-72+4, width, 72-4); //blacking out the settings area first
+			this.ctx.drawImage2(this.setting, 0, 0, 448, 72, 0, height-72, 448, 72); //settings panel
+			if(window.isClickingFish) this.ctx.drawImage2(this.setting, 104, 88, 64, 36, 104, height-72+16, 64, 36);
 			if(!this.organya || !this.organya.isWaveformEditor) {
-				this.ctx.drawImage(this.buttons, 0, 0, 192, 72, width-192, height-72, 192, 72); //green buttons
+				this.ctx.drawImage2(this.buttons, 0, 0, 192, 72, width-192, height-72, 192, 72); //green buttons
 			}
 			if (this.organya) {
-				this.ctx.drawImage(this.setting, 2, 72, 60, 2, this.organya.selectedTrack*64+2, height-58, 60, 2); //to make the selectedTrack tab look selected
+				this.ctx.drawImage2(this.setting, 2, 72, 60, 2, this.organya.selectedTrack*64+2, height-58, 60, 2); //to make the selectedTrack tab look selected
 				for(let i=0; i<this.organya.mutedTracks.length; i++) {//greying out muted tracks' labels
-					this.ctx.drawImage(this.setting, 64*this.organya.mutedTracks[i], 74, 64, 14, 64*this.organya.mutedTracks[i], height-72, 64, 14);
+					this.ctx.drawImage2(this.setting, 64*this.organya.mutedTracks[i], 74, 64, 14, 64*this.organya.mutedTracks[i], height-72, 64, 14);
 				}
 				this.drawNumber(102, height-55, this.organya.song.instruments[this.organya.selectedTrack].volume, 0, false, true); //volume
 				if (this.organya.selectedTrack!=3) {
@@ -307,23 +311,23 @@
 					this.drawNumber(102, height-19, this.organya.song.instruments[this.organya.selectedTrack].baseOctave, 0, false, true); //octave
 					var sprHeadX = (this.organya.song.instruments[this.organya.selectedTrack].icon % 10)*12;
 					var sprHeadY = ~~(this.organya.song.instruments[this.organya.selectedTrack].icon / 10)*12;
-					this.ctx.drawImage(this.noteImg, sprHeadX, sprHeadY, 12, 12, 172, height-55, 12, 12); //notehead image
+					this.ctx.drawImage2(this.noteImg, sprHeadX, sprHeadY, 12, 12, 172, height-55, 12, 12); //notehead image
 				}
 				this.drawNumber(438, height-55, this.organya.playPos, 0, false, true); //play position
 				this.drawNumber(438, height-37, this.organya.song.songLength, 0, false, true); //music size
 				this.drawNumber(438, height-19, this.organya.song.wait, 0, false, true); //music wait
 				if(!this.organya.isWaveformEditor) {
-					//this.ctx.drawImage(this.buttons, 0, 0, 192, 72, width-192, height-72, 192, 72); //green buttons
-					this.ctx.drawImage(this.check, 0, 0, 32, 64, width-192-8-32, height-72, 32, 64); //loop and lowspec options
-					this.ctx.drawImage(this.cursor, 16, 0, 16, 16, width-192+48*this.organya.editingMode, height-48, 16, 16); //editing mode indicator
-					if(this.organya.isLoop) this.ctx.drawImage(this.cursor, 32, 0, 16, 16, width-192-8-32, height-72, 16, 16); //loop indicator
-					if(this.organya.isLowSpec) this.ctx.drawImage(this.cursor, 32, 0, 16, 16, width-192-8-32, height-72+32, 16, 16); //lowspec indicator
+					//this.ctx.drawImage2(this.buttons, 0, 0, 192, 72, width-192, height-72, 192, 72); //green buttons
+					this.ctx.drawImage2(this.check, 0, 0, 32, 64, width-192-8-32, height-72, 32, 64); //loop and lowspec options
+					this.ctx.drawImage2(this.cursor, 16, 0, 16, 16, width-192+48*this.organya.editingMode, height-48, 16, 16); //editing mode indicator
+					if(this.organya.isLoop) this.ctx.drawImage2(this.cursor, 32, 0, 16, 16, width-192-8-32, height-72, 16, 16); //loop indicator
+					if(this.organya.isLowSpec) this.ctx.drawImage2(this.cursor, 32, 0, 16, 16, width-192-8-32, height-72+32, 16, 16); //lowspec indicator
 					if(this.organya.selectedTrack!=3) {
 						for(let i=0; i<128; i++) {
-							this.ctx.drawImage(this.pianoRoll, 0, 228, 2, 2, 188+i, height-30-(this.organya.song.instruments[this.organya.selectedTrack].waveSamples[2*i]*50/200 | 0), 2, 2) //wave samples
+							this.ctx.drawImage2(this.pianoRoll, 0, 228, 2, 2, 188+i, height-30-(this.organya.song.instruments[this.organya.selectedTrack].waveSamples[2*i]*50/200 | 0), 2, 2) //wave samples
 						}
 						for(let i=0; i<64; i++) {
-							this.ctx.drawImage(this.pianoRoll, 0, 228, 2, 2, 120+i, height-4-(this.organya.song.instruments[this.organya.selectedTrack].envelopeSamples[i]*16/128 | 0), 2, 2) //envelope samples
+							this.ctx.drawImage2(this.pianoRoll, 0, 228, 2, 2, 120+i, height-4-(this.organya.song.instruments[this.organya.selectedTrack].envelopeSamples[i]*16/128 | 0), 2, 2) //envelope samples
 						}
 					}
 				}
@@ -331,41 +335,41 @@
 			
 			//waveform editor
 			if (this.organya && this.organya.isWaveformEditor) {
-				this.ctx.drawImage(this.setting, 319, 84, 129, 40, 448-1, height-40, 129, 40); //music start/end options
+				this.ctx.drawImage2(this.setting, 319, 84, 129, 40, 448-1, height-40, 129, 40); //music start/end options
 				this.drawNumber(566, height-37, this.organya.song.start, 0, false, true); //
 				this.drawNumber(566, height-19, this.organya.song.end, 0, false, true); //and their numbers
 				this.ctx.fillRect(0, 0, width, height-80); //clear splash image from background but leave settings panels
-				this.ctx.drawImage(this.ok, 0, 0, 48, 24, width-48, height-24, 48, 24); //ok button
-				this.ctx.drawImage(this.msg, 0, 0, 54, 16, 64, 40, 54, 16); //'wave'
-				this.ctx.drawImage(this.per, 0, 0, 1, 200, 64, 56, 1, 200); //vertical lines for waveform bounding box
-				this.ctx.drawImage(this.per, 1, 0, 1, 200, 64+256, 56, 1, 200);
-				this.ctx.drawImage(this.per, 0, 0, 1, 200, 64+512, 56, 1, 200);
-				this.ctx.drawImage(this.lev, 0, 0, 512, 1, 64, 56, 512, 1); //horizontal lines
-				this.ctx.drawImage(this.lev, 0, 1, 512, 1, 64, 56+100, 512, 1);
-				this.ctx.drawImage(this.lev, 0, 0, 512, 1, 64, 56+200, 512, 1);
-				this.ctx.drawImage(this.msg, 0, 16, 100, 16, 320, 258, 100, 16);//'envelope'
-				this.ctx.drawImage(this.per, 0, 0, 1, 128, 320, 274, 1, 128); //vertical lines for envelope bounding box
-				this.ctx.drawImage(this.per, 0, 0, 1, 128, 320+256, 274, 1, 128);
-				this.ctx.drawImage(this.lev, 0, 0, 256, 1, 320, 274, 256, 1); //horizontal lines for envelope bounding box
-				this.ctx.drawImage(this.lev, 0, 0, 256, 1, 320, 274+128, 256, 1);
-				this.ctx.drawImage(this.msg, 56, 0, 54, 16, 64, 258, 54, 16); //'note'
-				this.ctx.drawImage(this.noteImg, 0, 0, 120, 120, 64, 274, 120, 120); //note icons
+				this.ctx.drawImage2(this.ok, 0, 0, 48, 24, width-48, height-24, 48, 24); //ok button
+				this.ctx.drawImage2(this.msg, 0, 0, 54, 16, 64, 40, 54, 16); //'wave'
+				this.ctx.drawImage2(this.per, 0, 0, 1, 200, 64, 56, 1, 200); //vertical lines for waveform bounding box
+				this.ctx.drawImage2(this.per, 1, 0, 1, 200, 64+256, 56, 1, 200);
+				this.ctx.drawImage2(this.per, 0, 0, 1, 200, 64+512, 56, 1, 200);
+				this.ctx.drawImage2(this.lev, 0, 0, 512, 1, 64, 56, 512, 1); //horizontal lines
+				this.ctx.drawImage2(this.lev, 0, 1, 512, 1, 64, 56+100, 512, 1);
+				this.ctx.drawImage2(this.lev, 0, 0, 512, 1, 64, 56+200, 512, 1);
+				this.ctx.drawImage2(this.msg, 0, 16, 100, 16, 320, 258, 100, 16);//'envelope'
+				this.ctx.drawImage2(this.per, 0, 0, 1, 128, 320, 274, 1, 128); //vertical lines for envelope bounding box
+				this.ctx.drawImage2(this.per, 0, 0, 1, 128, 320+256, 274, 1, 128);
+				this.ctx.drawImage2(this.lev, 0, 0, 256, 1, 320, 274, 256, 1); //horizontal lines for envelope bounding box
+				this.ctx.drawImage2(this.lev, 0, 0, 256, 1, 320, 274+128, 256, 1);
+				this.ctx.drawImage2(this.msg, 56, 0, 54, 16, 64, 258, 54, 16); //'note'
+				this.ctx.drawImage2(this.noteImg, 0, 0, 120, 120, 64, 274, 120, 120); //note icons
 				if(this.organya.selectedTrack!=3) {
 					for(let i=0; i<256; i++) {
-						this.ctx.drawImage(this.pianoRoll, 0, 228, 2, 2, 64+2*i, 156-this.organya.song.instruments[this.organya.selectedTrack].waveSamples[i], 2, 2) //wave samples
+						this.ctx.drawImage2(this.pianoRoll, 0, 228, 2, 2, 64+2*i, 156-this.organya.song.instruments[this.organya.selectedTrack].waveSamples[i], 2, 2) //wave samples
 					}
 					for(let i=0; i<64; i++) {
-						this.ctx.drawImage(this.pianoRoll, 0, 228, 2, 2, 320+4*i, 402-this.organya.song.instruments[this.organya.selectedTrack].envelopeSamples[i], 2, 2) //envelope samples
+						this.ctx.drawImage2(this.pianoRoll, 0, 228, 2, 2, 320+4*i, 402-this.organya.song.instruments[this.organya.selectedTrack].envelopeSamples[i], 2, 2) //envelope samples
 					}
 				}
 				if(this.organya.isEditingNumbers!=-1) { //flashing arrows for numerical edit boxes (this is beyond me, have a static sprite instead) (okay never mind i found out how)
 					let sprXs = [0,8,16,24,32,24,16,8];
 					let yIncr = [1,2,3,2,3,2,3];
 					let xOffs = [57, 57, 57, 393, 393, 521, 521];
-					this.ctx.drawImage(this.cursor, sprXs[this.organya.flashArrowsIndex], 16, 8, 18, xOffs[this.organya.isEditingNumbers], height-72+18*yIncr[this.organya.isEditingNumbers], 8, 16)
+					this.ctx.drawImage2(this.cursor, sprXs[this.organya.flashArrowsIndex], 16, 8, 18, xOffs[this.organya.isEditingNumbers], height-72+18*yIncr[this.organya.isEditingNumbers], 8, 16)
 				}
-				this.ctx.drawImage(this.msg, 0, 32, 88, 200, 64+512+12, 40, 88, 200); //presets
-				this.ctx.drawImage(this.msg, 94, 72, 34, 130, 320+256+36, 274, 34, 130); //presets
+				this.ctx.drawImage2(this.msg, 0, 32, 88, 200, 64+512+12, 40, 88, 200); //presets
+				this.ctx.drawImage2(this.msg, 94, 72, 34, 130, 320+256+36, 274, 34, 130); //presets
 			}
         }
     }
